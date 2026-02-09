@@ -56,4 +56,44 @@
 }
 .legend-btn[category="flooding"] .legend-symbol {
   background: #59A14F;
+
+/* SVG Elements */
+svg {
+  display: block;
+  margin: 20px 0;
+}
+
+/* Histogram */
+#histogram {
+  max-width: 100%;
+  height: auto;
+}
+
+.axis-label {
+  font-size: 12px;
+  fill: #333;
+}
+
+.title {
+  font-size: 14px;
+  fill: #333;
+  font-weight: bold;
+}
+
+/* Year slider */
+#year-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 20px;
+}
+
+#yearSlider {
+  width: 300px;
+}
+
+#yearLabel {
+  font-weight: 600;
+  margin-right: 6px;
+}
 }
