@@ -57,6 +57,8 @@
 .legend-btn[category="flooding"] .legend-symbol {
   background: #59A14F;
 
+}
+
 /* SVG Elements */
 svg {
   display: block;
@@ -67,6 +69,38 @@ svg {
 #histogram {
   max-width: 100%;
   height: auto;
+}
+
+#histogram-energy {
+  height: auto;
+  display: block;
+}
+
+#histogram-energy-container {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Keep both histogram containers the same visible width */
+#histogram-container,
+#histogram-energy-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Allow the SVG to be wider than the container without forcing the page to scroll */
+#histogram-energy {
+  display: block;
+  max-width: none;
+  width: auto; /* JS will set explicit pixel width */
+}
+
+/* Ensure page horizontal scroll doesn't appear due to large SVGs */
+html, body {
+  overflow-x: hidden;
 }
 
 .axis-label {
@@ -95,5 +129,4 @@ svg {
 #yearLabel {
   font-weight: 600;
   margin-right: 6px;
-}
 }

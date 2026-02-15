@@ -9,9 +9,14 @@
 <body>    
     <!-- Add HTML content, SVG drawing area, ... -->
 
-    <svg id="timeline"></svg>
+        <svg id="timeline"></svg>
 
-    <svg id="histogram"></svg>
+        <div id="histogram-container">
+            <svg id="histogram"></svg>
+        </div>
+        <div id="histogram-energy-container">
+            <svg id="histogram-energy"></svg>
+        </div>
 
         <div id="year-control" style="margin: 10px 20px;">
             <label for="yearSlider">Year: <span id="yearLabel">2023</span></label>
