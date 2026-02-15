@@ -4,6 +4,8 @@
 const HIST_MARGIN = { top: 30, right: 30, bottom: 60, left: 60 };
 const HIST_WIDTH = 800 - HIST_MARGIN.left - HIST_MARGIN.right;
 const HIST_HEIGHT = 500 - HIST_MARGIN.top - HIST_MARGIN.bottom;
+// Pixel width per country column (shared between charts)
+const BAR_STEP = 36;
 
 let lifeData = [];
 let svgGroup, xScale, yScale, xAxisG, yAxisG, xAxis, yAxis, tooltip;
@@ -20,17 +22,14 @@ function initHistogram() {
     .attr('preserveAspectRatio', 'xMidYMid meet');
 
   // Make the life-expectancy SVG fill its container's visible width
-  const histContainer = document.getElementById('histogram-container');
-  if (histContainer) {
-    const visibleWidth = histContainer.clientWidth || (HIST_WIDTH + HIST_MARGIN.left + HIST_MARGIN.right);
-    d3.select('#histogram').style('width', visibleWidth + 'px');
-  }
+  // Width will be set per-update to match column sizing (no fixed style here)
 
   svgGroup = svg.append('g')
     .attr('transform', `translate(${HIST_MARGIN.left},${HIST_MARGIN.top})`);
 
   // Scales (x domain set after data load)
-  xScale = d3.scaleLinear().range([0, HIST_WIDTH]);
+  // For per-country bars use a band scale
+  xScale = d3.scaleBand().padding(0.05).range([0, HIST_WIDTH]);
   yScale = d3.scaleLinear().range([HIST_HEIGHT, 0]);
 
   // Axis groups
@@ -47,7 +46,7 @@ function initHistogram() {
     .attr('x', HIST_WIDTH / 2)
     .attr('y', HIST_HEIGHT + 45)
     .attr('text-anchor', 'middle')
-    .text('Life Expectancy (years)');
+    .text('Country');
 
   svgGroup.append('text')
     .attr('class', 'axis-label')
@@ -55,14 +54,14 @@ function initHistogram() {
     .attr('x', -(HIST_HEIGHT / 2))
     .attr('y', -45)
     .attr('text-anchor', 'middle')
-    .text('Frequency');
+    .text('Life Expectancy (years)');
 
   svgGroup.append('text')
     .attr('class', 'title')
     .attr('x', HIST_WIDTH / 2)
     .attr('y', -10)
     .attr('text-anchor', 'middle')
-    .text('Distribution of Life Expectancy Across Countries and Years');
+    .text('Life Expectancy by Country (selected year)');
 
   // Tooltip
   tooltip = d3.select('#tooltip')
@@ -111,87 +110,86 @@ function initEnergyHistogram() {
     .attr('x', HIST_WIDTH / 2)
     .attr('y', -10)
     .attr('text-anchor', 'middle')
-    .text('Per-Capita Energy Consumption by Country (scroll horizontally)');
+    .text('Per-Capita Energy Consumption by Country');
 }
 
 function updateHistogram(year) {
-  // Filter for the selected year
-  const dataByYear = lifeData.filter(d => d.year === +year);
+  // Build per-country bar chart for the selected year
+  const dataByYear = lifeData.filter(d => d.year === +year && !isNaN(d.life_expectancy));
 
-  // Create histogram generator using global domain so bins are comparable across years
-  const histGen = d3.histogram()
-    .value(d => d.life_expectancy)
-    .domain(globalDomain)
-    .thresholds(40);
+  // Map unique countries to values (keep one value per country)
+  const byCountry = new Map();
+  dataByYear.forEach(d => byCountry.set(d.country, d.life_expectancy));
+  const countryData = Array.from(byCountry.entries()).map(([country, life_expectancy]) => ({ country, life_expectancy }));
 
-  const bins = histGen(dataByYear);
+  // Sort by life expectancy descending for nicer ordering
+  countryData.sort((a, b) => b.life_expectancy - a.life_expectancy);
 
-  // Update scales
-  xScale.domain(globalDomain);
-  yScale.domain([0, d3.max(bins, d => d.length) || 1]);
+  // Use the same per-country pixel width as the energy chart
+  const n = countryData.length;
+  const barStep = BAR_STEP;
+  const innerWidth = Math.max(HIST_WIDTH, n * barStep);
 
-  // Bind data to bars
-  const bars = svgGroup.selectAll('rect.bar')
-    .data(bins, d => `${d.x0}-${d.x1}`);
+  // Set explicit SVG width so the container can scroll horizontally if needed
+  const totalWidth = innerWidth + HIST_MARGIN.left + HIST_MARGIN.right;
+  const svgEl = d3.select('#histogram');
+  svgEl
+    .attr('height', HIST_HEIGHT + HIST_MARGIN.top + HIST_MARGIN.bottom)
+    .attr('viewBox', `0 0 ${totalWidth} ${HIST_HEIGHT + HIST_MARGIN.top + HIST_MARGIN.bottom}`)
+    .attr('width', totalWidth)
+    .style('width', totalWidth + 'px');
 
-  // EXIT
-  bars.exit()
-    .transition()
-    .duration(200)
-    .attr('y', yScale(0))
-    .attr('height', 0)
-    .remove();
+  xScale.range([0, innerWidth]).domain(countryData.map(d => d.country));
+  yScale.domain([0, d3.max(countryData, d => d.life_expectancy) || 1]);
 
-  // UPDATE
-  bars.transition()
-    .duration(300)
-    .attr('x', d => xScale(d.x0))
-    .attr('y', d => yScale(d.length))
-    .attr('width', d => Math.max(0, xScale(d.x1) - xScale(d.x0) - 1))
-    .attr('height', d => HIST_HEIGHT - yScale(d.length));
+  const bars = svgGroup.selectAll('rect.life-bar')
+    .data(countryData, d => d.country);
 
-  // ENTER
-  const barsEnter = bars.enter()
-    .append('rect')
-    .attr('class', 'bar')
-    .attr('x', d => xScale(d.x0))
-    .attr('y', yScale(0))
-    .attr('width', d => Math.max(0, xScale(d.x1) - xScale(d.x0) - 1))
+  bars.exit().remove();
+
+  bars.transition().duration(300)
+    .attr('x', d => xScale(d.country))
+    .attr('y', d => yScale(d.life_expectancy))
+    .attr('width', Math.max(1, xScale.bandwidth()))
+    .attr('height', d => HIST_HEIGHT - yScale(d.life_expectancy));
+
+  const barsEnter = bars.enter().append('rect')
+    .attr('class', 'life-bar')
+    .attr('x', d => xScale(d.country))
+    .attr('y', HIST_HEIGHT)
+    .attr('width', Math.max(1, xScale.bandwidth()))
     .attr('height', 0)
     .attr('fill', '#4CAF50')
     .attr('stroke', '#333')
-    .attr('stroke-width', 0.5)
+    .attr('stroke-width', 0.3)
     .on('mouseover', (event, d) => {
-      const countries = Array.from(new Set(d.map(item => item.country))).sort();
-      const maxToShow = 200;
-      const shown = countries.slice(0, maxToShow);
-      const more = countries.length > shown.length ? `\n...and ${countries.length - shown.length} more` : '';
       tooltip.style('display', 'block')
-        .html(`<div class="tooltip-title">Countries (${countries.length})</div><div>${shown.join(', ')}${more}</div>`);
+        .html(`<div class="tooltip-title">${d.country}</div><div>Life expectancy: ${d.life_expectancy}</div>`);
     })
     .on('mousemove', (event) => {
       tooltip.style('left', (event.pageX + 10) + 'px')
         .style('top', (event.pageY + 10) + 'px');
     })
-    .on('mouseout', () => {
-      tooltip.style('display', 'none');
-    });
+    .on('mouseout', () => tooltip.style('display', 'none'));
 
-  barsEnter.transition()
-    .duration(300)
-    .attr('y', d => yScale(d.length))
-    .attr('height', d => HIST_HEIGHT - yScale(d.length));
+  barsEnter.transition().duration(300)
+    .attr('y', d => yScale(d.life_expectancy))
+    .attr('height', d => HIST_HEIGHT - yScale(d.life_expectancy));
 
-  // Update axes
-  xAxis = d3.axisBottom(xScale).ticks(10);
+  xAxis = d3.axisBottom(xScale);
   yAxis = d3.axisLeft(yScale).ticks(6);
 
-  xAxisG.transition().duration(300).call(xAxis);
+  xAxisG.call(xAxis)
+    .selectAll('text')
+    .style('text-anchor', 'end')
+    .attr('transform', 'rotate(-45)')
+    .attr('dx', '-0.6em')
+    .attr('dy', '0.1em');
+
   yAxisG.transition().duration(300).call(yAxis);
 
-  // If no data for year, show a small message
   svgGroup.selectAll('text.no-data').remove();
-  if (dataByYear.length === 0) {
+  if (n === 0) {
     svgGroup.append('text')
       .attr('class', 'no-data')
       .attr('x', HIST_WIDTH / 2)
@@ -216,7 +214,7 @@ function updateEnergyHistogram(year) {
   countryData.sort((a, b) => b.energy - a.energy);
 
   const n = countryData.length;
-  const barStep = 36; // px per country (larger -> wider bars)
+  const barStep = BAR_STEP; // use shared BAR_STEP
   const innerWidth = Math.max(HIST_WIDTH, n * barStep);
   const totalWidth = innerWidth + HIST_MARGIN.left + HIST_MARGIN.right;
 

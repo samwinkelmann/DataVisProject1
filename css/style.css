@@ -67,8 +67,10 @@ svg {
 
 /* Histogram */
 #histogram {
-  max-width: 100%;
   height: auto;
+  display: block;
+  max-width: none;
+  width: auto; /* JS will set explicit pixel width */
 }
 
 #histogram-energy {
@@ -89,6 +91,7 @@ svg {
 #histogram-energy-container {
   max-width: 800px;
   margin: 0 auto;
+  overflow-x: auto; /* allow horizontal scroll inside each histogram container */
 }
 
 /* Allow the SVG to be wider than the container without forcing the page to scroll */
