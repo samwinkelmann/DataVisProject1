@@ -104,6 +104,9 @@ svg {
 /* Ensure page horizontal scroll doesn't appear due to large SVGs */
 html, body {
   overflow-x: hidden;
+#scatter-container {
+  overflow-x: auto; /* make scatter container scrollable horizontally if needed */
+}
 }
 
 .axis-label {
