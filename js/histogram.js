@@ -12,6 +12,19 @@ let svgGroup, xScale, yScale, xAxisG, yAxisG, xAxis, yAxis, tooltip;
 let globalDomain;
 // Energy histogram variables
 let svgGroupE, xScaleE, yScaleE, xAxisGE, yAxisGE, xAxisE, yAxisE, globalDomainEnergy;
+// Continent color scale
+const continentColors = {
+  'Asia': '#E74C3C',
+  'Africa': '#F39C12',
+  'Europe': '#3498DB',
+  'North America': '#27AE60',
+  'South America': '#9B59B6',
+  'Oceania': '#1ABC9C',
+  'Unknown': '#95A5A6'
+};
+const continentColorScale = d3.scaleOrdinal()
+  .domain(Object.keys(continentColors))
+  .range(Object.values(continentColors));
 
 function initHistogram() {
   // Prepare SVG and groups
@@ -119,8 +132,8 @@ function updateHistogram(year) {
 
   // Map unique countries to values (keep one value per country)
   const byCountry = new Map();
-  dataByYear.forEach(d => byCountry.set(d.country, d.life_expectancy));
-  const countryData = Array.from(byCountry.entries()).map(([country, life_expectancy]) => ({ country, life_expectancy }));
+  dataByYear.forEach(d => byCountry.set(d.country, { life_expectancy: d.life_expectancy, continent: d.continent }));
+  const countryData = Array.from(byCountry.entries()).map(([country, data]) => ({ country, life_expectancy: data.life_expectancy, continent: data.continent }));
 
   // Sort by life expectancy descending for nicer ordering
   countryData.sort((a, b) => b.life_expectancy - a.life_expectancy);
@@ -159,7 +172,7 @@ function updateHistogram(year) {
     .attr('y', HIST_HEIGHT)
     .attr('width', Math.max(1, xScale.bandwidth()))
     .attr('height', 0)
-    .attr('fill', '#4CAF50')
+    .attr('fill', d => continentColorScale(d.continent))
     .attr('stroke', '#333')
     .attr('stroke-width', 0.3)
     .on('mouseover', (event, d) => {
@@ -204,11 +217,11 @@ function updateEnergyHistogram(year) {
   const dataByYear = lifeData.filter(d => d.year === +year && !isNaN(d.energy_consumption));
 
   // Map countries to energy values
-  const countries = dataByYear.map(d => ({ country: d.country, energy: d.energy_consumption }));
+  const countries = dataByYear.map(d => ({ country: d.country, energy: d.energy_consumption, continent: d.continent }));
   // Keep unique countries (in case duplicates), take latest if duplicates
   const byCountry = new Map();
-  countries.forEach(d => byCountry.set(d.country, d.energy));
-  const countryData = Array.from(byCountry.entries()).map(([country, energy]) => ({ country, energy }));
+  countries.forEach(d => byCountry.set(d.country, { energy: d.energy, continent: d.continent }));
+  const countryData = Array.from(byCountry.entries()).map(([country, data]) => ({ country, energy: data.energy, continent: data.continent }));
 
   // Sort by energy descending for better visual ordering
   countryData.sort((a, b) => b.energy - a.energy);
@@ -260,7 +273,7 @@ function updateEnergyHistogram(year) {
     .attr('y', HIST_HEIGHT)
     .attr('width', Math.max(4, xScaleE.bandwidth()))
     .attr('height', 0)
-    .attr('fill', '#2196F3')
+    .attr('fill', d => continentColorScale(d.continent))
     .attr('stroke', '#333')
     .attr('stroke-width', 0.3)
     .on('mouseover', (event, d) => {
@@ -306,13 +319,16 @@ function updateEnergyHistogram(year) {
 initHistogram();
 initEnergyHistogram();
 
-d3.csv('data/life-expectancy.csv').then(raw => {
+d3.csv('data/life-expectancy.csv?t=' + Date.now()).then(raw => {
   lifeData = raw.map(d => ({
     country: d.country,
+    code: d.code,
+    continent: (d.continent && d.continent.trim()) || 'Unknown',
     year: +d.year,
     life_expectancy: +d.life_expectancy,
     energy_consumption: d.energy_consumption === '' ? NaN : +d.energy_consumption
   })).filter(d => !isNaN(d.life_expectancy) && d.life_expectancy > 0 && !isNaN(d.year));
+  console.log('Life data loaded:', lifeData.length, 'rows. Sample:', lifeData[0]);
 
   if (lifeData.length === 0) {
     console.error('No life expectancy data available');

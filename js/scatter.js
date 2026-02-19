@@ -1,42 +1,42 @@
-// Scatterplot: life expectancy (y) vs per-capita energy (x)
-// Loads CSV and draws one point per country for selected year
+// Scatterplot: life expectancy (y) vs energy consumption (x)
+// Uses the same data as histogram.js (lifeData) and continent color scale
 
 const S_MARGIN = { top: 30, right: 30, bottom: 60, left: 60 };
 const S_WIDTH = 800 - S_MARGIN.left - S_MARGIN.right;
 const S_HEIGHT = 500 - S_MARGIN.top - S_MARGIN.bottom;
 
-let scatterData = [];
-let svgS, svgGroupS, xScaleS, yScaleS, xAxisSG, yAxisSG, xAxisS, yAxisS, tooltipS;
+let svgScatter, svgGroupScatter, xScaleScatter, yScaleScatter;
+let xAxisSG, yAxisSG, xAxisScatter, yAxisScatter, tooltipScatter;
 let globalEnergyDomain, globalLifeDomain;
 
 function initScatter() {
-  svgS = d3.select('#scatter')
+  svgScatter = d3.select('#scatter')
     .attr('width', S_WIDTH + S_MARGIN.left + S_MARGIN.right)
     .attr('height', S_HEIGHT + S_MARGIN.top + S_MARGIN.bottom)
     .attr('viewBox', `0 0 ${S_WIDTH + S_MARGIN.left + S_MARGIN.right} ${S_HEIGHT + S_MARGIN.top + S_MARGIN.bottom}`)
     .attr('preserveAspectRatio', 'xMidYMid meet');
 
-  svgGroupS = svgS.append('g')
+  svgGroupScatter = svgScatter.append('g')
     .attr('transform', `translate(${S_MARGIN.left},${S_MARGIN.top})`);
 
-  xScaleS = d3.scaleLinear().range([0, S_WIDTH]);
-  yScaleS = d3.scaleLinear().range([S_HEIGHT, 0]);
+  xScaleScatter = d3.scaleLinear().range([0, S_WIDTH]);
+  yScaleScatter = d3.scaleLinear().range([S_HEIGHT, 0]);
 
-  xAxisSG = svgGroupS.append('g')
+  xAxisSG = svgGroupScatter.append('g')
     .attr('transform', `translate(0,${S_HEIGHT})`)
     .attr('class', 'x-axis');
 
-  yAxisSG = svgGroupS.append('g')
+  yAxisSG = svgGroupScatter.append('g')
     .attr('class', 'y-axis');
 
-  svgGroupS.append('text')
+  svgGroupScatter.append('text')
     .attr('class', 'axis-label')
     .attr('x', S_WIDTH / 2)
     .attr('y', S_HEIGHT + 45)
     .attr('text-anchor', 'middle')
     .text('Energy Consumption (per-capita)');
 
-  svgGroupS.append('text')
+  svgGroupScatter.append('text')
     .attr('class', 'axis-label')
     .attr('transform', 'rotate(-90)')
     .attr('x', -(S_HEIGHT / 2))
@@ -44,50 +44,30 @@ function initScatter() {
     .attr('text-anchor', 'middle')
     .text('Life Expectancy (years)');
 
-  svgGroupS.append('text')
+  svgGroupScatter.append('text')
     .attr('class', 'title')
     .attr('x', S_WIDTH / 2)
     .attr('y', -10)
     .attr('text-anchor', 'middle')
-    .text('Life Expectancy vs Per-Capita Energy Consumption');
+    .text('Life Expectancy vs Energy Consumption by Country');
 
-  tooltipS = d3.select('#tooltip');
-}
-
-function loadScatterDataAndInit() {
-  d3.csv('data/life-expectancy.csv').then(raw => {
-    scatterData = raw.map(d => ({
-      country: d.country,
-      year: +d.year,
-      life_expectancy: d.life_expectancy === '' ? NaN : +d.life_expectancy,
-      energy_consumption: d.energy_consumption === '' ? NaN : +d.energy_consumption
-    }));
-
-    // compute global domains
-    globalLifeDomain = d3.extent(scatterData.filter(d => !isNaN(d.life_expectancy)), d => d.life_expectancy);
-    globalEnergyDomain = d3.extent(scatterData.filter(d => !isNaN(d.energy_consumption)), d => d.energy_consumption);
-
-    if (!svgS) initScatter();
-
-    // initial draw using slider value if present
-    const slider = document.getElementById('yearSlider');
-    const year = slider ? +slider.value : d3.max(scatterData, d => d.year);
-    updateScatter(year);
-
-    // listen to slider changes
-    if (slider) slider.addEventListener('input', (e) => updateScatter(+e.target.value));
-  }).catch(err => console.error('Error loading CSV for scatter:', err));
+  tooltipScatter = d3.select('#tooltip');
 }
 
 function updateScatter(year) {
-  if (!svgS) initScatter();
+  if (!svgScatter) initScatter();
 
-  const points = scatterData.filter(d => d.year === +year && !isNaN(d.life_expectancy) && !isNaN(d.energy_consumption));
+  // Filter data for the selected year and remove rows with missing energy or life expectancy
+  const points = lifeData.filter(d => 
+    d.year === +year && 
+    !isNaN(d.life_expectancy) && 
+    !isNaN(d.energy_consumption)
+  );
 
-  svgGroupS.selectAll('text.no-data').remove();
+  svgGroupScatter.selectAll('text.no-data').remove();
   if (points.length === 0) {
-    svgGroupS.selectAll('circle.point').remove();
-    svgGroupS.append('text')
+    svgGroupScatter.selectAll('circle.point').remove();
+    svgGroupScatter.append('text')
       .attr('class', 'no-data')
       .attr('x', S_WIDTH / 2)
       .attr('y', S_HEIGHT / 2)
@@ -97,62 +77,72 @@ function updateScatter(year) {
     return;
   }
 
-  // set domains (global for comparability)
-  xScaleS.domain(globalEnergyDomain);
-  yScaleS.domain(globalLifeDomain);
+  // Set domains (global for comparability across years)
+  xScaleScatter.domain([0, d3.max(points, d => d.energy_consumption) || 100]);
+  yScaleScatter.domain([0, d3.max(points, d => d.life_expectancy) || 100]);
 
-  xAxisS = d3.axisBottom(xScaleS).ticks(8);
-  yAxisS = d3.axisLeft(yScaleS).ticks(6);
+  xAxisScatter = d3.axisBottom(xScaleScatter).ticks(8);
+  yAxisScatter = d3.axisLeft(yScaleScatter).ticks(6);
 
-  xAxisSG.transition().duration(250).call(xAxisS);
-  yAxisSG.transition().duration(250).call(yAxisS);
+  xAxisSG.transition().duration(250).call(xAxisScatter);
+  yAxisSG.transition().duration(250).call(yAxisScatter);
 
-  const sel = svgGroupS.selectAll('circle.point')
+  const circles = svgGroupScatter.selectAll('circle.point')
     .data(points, d => d.country);
 
-  sel.exit().transition().duration(200).attr('r', 0).remove();
+  // Exit
+  circles.exit().transition().duration(200).attr('r', 0).remove();
 
-  sel.transition().duration(300)
-    .attr('cx', d => xScaleS(d.energy_consumption))
-    .attr('cy', d => yScaleS(d.life_expectancy));
+  // Update
+  circles.transition().duration(300)
+    .attr('cx', d => xScaleScatter(d.energy_consumption))
+    .attr('cy', d => yScaleScatter(d.life_expectancy));
 
-  const enter = sel.enter().append('circle')
+  // Enter
+  const enter = circles.enter().append('circle')
     .attr('class', 'point')
-    .attr('cx', d => xScaleS(d.energy_consumption))
-    .attr('cy', d => yScaleS(d.life_expectancy))
+    .attr('cx', d => xScaleScatter(d.energy_consumption))
+    .attr('cy', d => yScaleScatter(d.life_expectancy))
     .attr('r', 0)
-    .attr('fill', '#8E44AD')
+    .attr('fill', d => continentColorScale(d.continent))
     .attr('opacity', 0.85)
+    .attr('stroke', '#333')
+    .attr('stroke-width', 0.5)
     .on('mouseover', (event, d) => {
-      tooltipS.style('display', 'block')
-        .html(`<div class="tooltip-title">${d.country}</div><div>Life: ${d.life_expectancy}<br/>Energy: ${d.energy_consumption}</div>`);
+      tooltipScatter.style('display', 'block')
+        .html(`<div class="tooltip-title">${d.country}</div><div>${d.continent}</div><div>Life Expectancy: ${d.life_expectancy.toFixed(1)}</div><div>Energy: ${d.energy_consumption.toFixed(2)}</div>`);
     })
     .on('mousemove', (event) => {
-      tooltipS.style('left', (event.pageX + 10) + 'px').style('top', (event.pageY + 10) + 'px');
+      tooltipScatter.style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY + 10) + 'px');
     })
-    .on('mouseout', () => tooltipS.style('display', 'none'));
+    .on('mouseout', () => tooltipScatter.style('display', 'none'));
 
-  enter.transition().duration(300).attr('r', 4);
+  enter.transition().duration(300).attr('r', 5);
 }
 
-// If the page has a data loader already, prefer waiting for it; otherwise load independently
-// We attempt to detect if `lifeData` is present (from other scripts). If present, use it.
-if (typeof lifeData !== 'undefined' && Array.isArray(lifeData) && lifeData.length > 0) {
-  // derive scatterData from lifeData
-  scatterData = lifeData.map(d => ({
-    country: d.country,
-    year: d.year,
-    life_expectancy: d.life_expectancy,
-    energy_consumption: d.energy_consumption
-  }));
-  globalLifeDomain = d3.extent(scatterData.filter(d => !isNaN(d.life_expectancy)), d => d.life_expectancy);
-  globalEnergyDomain = d3.extent(scatterData.filter(d => !isNaN(d.energy_consumption)), d => d.energy_consumption);
-  initScatter();
-  const slider = document.getElementById('yearSlider');
-  const year = slider ? +slider.value : d3.max(scatterData, d => d.year);
-  updateScatter(year);
-  if (slider) slider.addEventListener('input', (e) => updateScatter(+e.target.value));
-} else {
-  // load the CSV ourselves
-  loadScatterDataAndInit();
+// Initialize when histogram data is ready
+// Wait for lifeData to be populated by histogram.js
+function initScatterWhenReady() {
+  if (typeof lifeData !== 'undefined' && Array.isArray(lifeData) && lifeData.length > 0) {
+    // Compute global domains
+    globalLifeDomain = d3.extent(lifeData.filter(d => !isNaN(d.life_expectancy)), d => d.life_expectancy);
+    globalEnergyDomain = d3.extent(lifeData.filter(d => !isNaN(d.energy_consumption)), d => d.energy_consumption);
+
+    initScatter();
+    const slider = document.getElementById('yearSlider');
+    const year = slider ? +slider.value : d3.max(lifeData, d => d.year);
+    updateScatter(year);
+
+    // Listen to slider changes
+    if (slider) {
+      slider.addEventListener('input', (e) => updateScatter(+e.target.value));
+    }
+  } else {
+    // Wait a bit and try again
+    setTimeout(initScatterWhenReady, 100);
+  }
 }
+
+// Start initialization when DOM is ready
+window.addEventListener('load', initScatterWhenReady);
