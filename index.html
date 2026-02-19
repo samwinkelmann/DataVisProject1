@@ -57,6 +57,22 @@
             </div>
         </div>
 
+        <div id="choropleth-container" style="margin: 20px;">
+            <h2>Global Data by Country</h2>
+            <div style="display: flex; gap: 20px; align-items: flex-start;">
+                <div id="choropleth-life-expectancy" style="flex: 1; display: flex; flex-direction: column;">
+                    <h3 style="margin: 0 0 10px 0;">Life Expectancy</h3>
+                    <svg id="choropleth" style="border: 1px solid #eee;"></svg>
+                    <div id="choropleth-legend" style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;"></div>
+                </div>
+                <div id="choropleth-energy-container" style="flex: 1; display: flex; flex-direction: column;">
+                    <h3 style="margin: 0 0 10px 0;">Energy Consumption</h3>
+                    <svg id="choropleth-energy" style="border: 1px solid #eee;"></svg>
+                    <div id="choropleth-energy-legend" style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;"></div>
+                </div>
+            </div>
+        </div>
+
     <div id="tooltip"></div>
 
 
@@ -65,6 +81,8 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
 
     <!-- Our JS code - INCLUDING the new files-->
+    <script src="js/topojson.v3.js"></script>
+    <script src="js/choroplethMap.js"></script>
     <script src="js/main.js"></script>
     <script src="js/histogram.js"></script>
     <script src="js/scatter.js"></script>
