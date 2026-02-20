@@ -17,9 +17,9 @@ const continentColors = {
   'Asia': '#E74C3C',
   'Africa': '#F39C12',
   'Europe': '#3498DB',
-  'North America': '#27AE60',
+  'North America': '#f6ff00',
   'South America': '#9B59B6',
-  'Oceania': '#1ABC9C',
+  'Oceania': '#02c21f',
   'Unknown': '#95A5A6'
 };
 const continentColorScale = d3.scaleOrdinal()

@@ -9,24 +9,6 @@
 <body>    
     <!-- Add HTML content, SVG drawing area, ... -->
 
-        <svg id="timeline"></svg>
-
-        <div id="histogram-container">
-            <svg id="histogram"></svg>
-        </div>
-        <div id="histogram-energy-container">
-            <svg id="histogram-energy"></svg>
-        </div>
-
-        <div id="scatter-container">
-            <svg id="scatter"></svg>
-        </div>
-
-        <div id="year-control" style="margin: 10px 20px;">
-            <label for="yearSlider">Year: <span id="yearLabel">2023</span></label>
-            <input id="yearSlider" type="range" min="1950" max="2023" value="2023" step="1" />
-        </div>
-
         <div id="legend" style="margin: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px; width: fit-content;">
             <h3 style="margin-top: 0;">Continents</h3>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
@@ -43,7 +25,7 @@
                     <span>Europe</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 16px; height: 16px; background: #27AE60; border-radius: 2px;"></div>
+                    <div style="width: 16px; height: 16px; background: #f6ff00; border-radius: 2px;"></div>
                     <span>North America</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -51,10 +33,28 @@
                     <span>South America</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 16px; height: 16px; background: #1ABC9C; border-radius: 2px;"></div>
+                    <div style="width: 16px; height: 16px; background: #02c21f; border-radius: 2px;"></div>
                     <span>Oceania</span>
                 </div>
             </div>
+        </div>
+
+        <div id="year-control" style="margin: 10px 20px;">
+            <label for="yearSlider">Year: <span id="yearLabel">2023</span></label>
+            <input id="yearSlider" type="range" min="1950" max="2023" value="2023" step="1" />
+        </div>
+
+        <svg id="timeline"></svg>
+
+        <div id="histogram-container">
+            <svg id="histogram"></svg>
+        </div>
+        <div id="histogram-energy-container">
+            <svg id="histogram-energy"></svg>
+        </div>
+
+        <div id="scatter-container">
+            <svg id="scatter"></svg>
         </div>
 
         <div id="choropleth-container" style="margin: 20px;">
