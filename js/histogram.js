@@ -10,6 +10,11 @@ const BAR_STEP = 36;
 let lifeData = [];
 let svgGroup, xScale, yScale, xAxisG, yAxisG, xAxis, yAxis, tooltip;
 let globalDomain;
+// Current year shown
+let currentYear = null;
+// Set of enabled continents (initialized after continentColors is defined)
+let selectedContinents = null;
+window.selectedContinents = selectedContinents;
 // Energy histogram variables
 let svgGroupE, xScaleE, yScaleE, xAxisGE, yAxisGE, xAxisE, yAxisE, globalDomainEnergy;
 // Continent color scale
@@ -25,6 +30,10 @@ const continentColors = {
 const continentColorScale = d3.scaleOrdinal()
   .domain(Object.keys(continentColors))
   .range(Object.values(continentColors));
+
+// Initialize selected continents set now that continentColors exists
+selectedContinents = new Set(Object.keys(continentColors));
+window.selectedContinents = selectedContinents;
 
 function initHistogram() {
   // Prepare SVG and groups
@@ -128,7 +137,7 @@ function initEnergyHistogram() {
 
 function updateHistogram(year) {
   // Build per-country bar chart for the selected year
-  const dataByYear = lifeData.filter(d => d.year === +year && !isNaN(d.life_expectancy));
+  const dataByYear = lifeData.filter(d => d.year === +year && !isNaN(d.life_expectancy) && (selectedContinents.has(d.continent)));
 
   // Map unique countries to values (keep one value per country)
   const byCountry = new Map();
@@ -214,7 +223,7 @@ function updateHistogram(year) {
 }
 
 function updateEnergyHistogram(year) {
-  const dataByYear = lifeData.filter(d => d.year === +year && !isNaN(d.energy_consumption));
+  const dataByYear = lifeData.filter(d => d.year === +year && !isNaN(d.energy_consumption) && (selectedContinents.has(d.continent)));
 
   // Map countries to energy values
   const countries = dataByYear.map(d => ({ country: d.country, energy: d.energy_consumption, continent: d.continent }));
@@ -353,16 +362,52 @@ d3.csv('data/life-expectancy.csv?t=' + Date.now()).then(raw => {
   label.textContent = slider.value;
 
   // Initial draw
-  updateHistogram(+slider.value);
-  updateEnergyHistogram(+slider.value);
+  currentYear = +slider.value;
+  updateHistogram(currentYear);
+  updateEnergyHistogram(currentYear);
 
   // Event
   slider.addEventListener('input', (e) => {
     const y = +e.target.value;
     label.textContent = y;
+    currentYear = y;
     updateHistogram(y);
     updateEnergyHistogram(y);
+    if (typeof updateScatter === 'function') updateScatter(y);
   });
+
+  // Setup clickable continent legend (top of page) so users can toggle continents
+  function setupContinentLegend() {
+    // Select the legend item containers (grid children) so the whole item (square + label) is clickable
+    const legendItems = document.querySelectorAll('#legend > div > div');
+    legendItems.forEach(item => {
+      const span = item.querySelector('span');
+      if (!span) return;
+      const name = item.dataset.continent || span.textContent.trim();
+      item.style.cursor = 'pointer';
+      item.style.userSelect = 'none';
+      // set initial appearance for both square and text via the container
+      item.style.opacity = selectedContinents.has(name) ? '1' : '0.35';
+      item.addEventListener('click', () => {
+        if (selectedContinents.has(name)) {
+          selectedContinents.delete(name);
+          item.style.opacity = '0.35';
+        } else {
+          selectedContinents.add(name);
+          item.style.opacity = '1';
+        }
+        window.selectedContinents = selectedContinents;
+        // refresh charts
+        if (currentYear !== null) {
+          updateHistogram(currentYear);
+          updateEnergyHistogram(currentYear);
+          if (typeof updateScatter === 'function') updateScatter(currentYear);
+        }
+      });
+    });
+  }
+
+  setupContinentLegend();
 
 }).catch(err => {
   console.error('Error loading life-expectancy.csv:', err);

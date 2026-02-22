@@ -61,7 +61,8 @@ function updateScatter(year) {
   const points = lifeData.filter(d => 
     d.year === +year && 
     !isNaN(d.life_expectancy) && 
-    !isNaN(d.energy_consumption)
+    !isNaN(d.energy_consumption) &&
+    (typeof window.selectedContinents === 'undefined' || window.selectedContinents.has(d.continent))
   );
 
   svgGroupScatter.selectAll('text.no-data').remove();
