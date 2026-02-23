@@ -72,21 +72,29 @@ svg {
   max-width: none;
   width: auto; /* JS will set explicit pixel width */
 }
-
-#histogram-energy {
-  height: auto;
-  display: block;
-}
-
 #histogram-energy-container {
-  width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Keep both histogram containers the same visible width */
+/* Row wrapper for both histograms to display side-by-side */
+#histograms-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin: 20px;
+}
+
+/* Keep both histogram containers the same visible width when side-by-side */
+#histogram-container,
+#histogram-energy-container {
+  flex: 1;
+  min-width: 320px;
+  max-width: none;
+  box-sizing: border-box;
+  overflow-x: auto; /* allow horizontal scroll inside each histogram container */
+}
 #histogram-container,
 #histogram-energy-container {
   max-width: 800px;
