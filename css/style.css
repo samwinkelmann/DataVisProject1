@@ -16,6 +16,30 @@
   font-size: 14px;
   font-weight: 600;
 }
+#project-header {
+  background: linear-gradient(180deg, #ffffff, #fbfbfb);
+  border-bottom: 1px solid #e6e6e6;
+  padding: 18px 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+#project-header h1 {
+  margin: 0;
+  font-size: 22px;
+  color: #222;
+  font-weight: 700;
+}
+
+#project-header .subtitle {
+  margin: 6px 0 0 0;
+  color: #666;
+  font-size: 13px;
+}
 #tooltip ul {
   margin: 5px 0 0 0;
   padding-left: 20px;
