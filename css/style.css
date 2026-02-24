@@ -24,7 +24,6 @@
 
 .container {
   max-width: 1200px;
-  margin: 0 auto;
   padding: 0 16px;
 }
 
@@ -158,6 +157,33 @@ html, body {
   font-size: 14px;
   fill: #333;
   font-weight: bold;
+}
+
+/* Selection styles */
+.selected {
+  stroke: #000 !important;
+  stroke-width: 1.2 !important;
+  opacity: 1 !important;
+}
+
+.dimmed {
+  opacity: 0.15 !important;
+}
+
+/* Brush styling */
+.brush {
+  pointer-events: auto;
+}
+
+.brush .overlay {
+  cursor: crosshair;
+  fill: none;
+}
+
+/* Keep bars below brush but allow tooltips */
+.life-bar,
+.country-bar {
+  pointer-events: none;
 }
 
 /* Year slider */

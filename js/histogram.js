@@ -1,7 +1,7 @@
 // Interactive histogram for life expectancy by year
 // Loads full CSV once, then updates histogram when the year slider changes
 
-const HIST_MARGIN = { top: 30, right: 30, bottom: 60, left: 60 };
+const HIST_MARGIN = { top: 30, right: 30, bottom: 120, left: 60 };
 const HIST_WIDTH = 800 - HIST_MARGIN.left - HIST_MARGIN.right;
 const HIST_HEIGHT = 500 - HIST_MARGIN.top - HIST_MARGIN.bottom;
 // Pixel width per country column (shared between charts)
@@ -10,6 +10,7 @@ const BAR_STEP = 36;
 let lifeData = [];
 let svgGroup, xScale, yScale, xAxisG, yAxisG, xAxis, yAxis, tooltip;
 let globalDomain;
+let brushHist, brushHistE;
 // Current year shown
 let currentYear = null;
 // Set of enabled continents (initialized after continentColors is defined)
@@ -66,7 +67,7 @@ function initHistogram() {
   svgGroup.append('text')
     .attr('class', 'axis-label')
     .attr('x', HIST_WIDTH / 2)
-    .attr('y', HIST_HEIGHT + 45)
+    .attr('y', HIST_HEIGHT + 105)
     .attr('text-anchor', 'middle')
     .text('Country');
 
@@ -90,6 +91,38 @@ function initHistogram() {
     .style('position', 'absolute')
     .style('display', 'none')
     .style('pointer-events', 'none');
+
+  // Add brush for selecting countries on the life expectancy histogram
+  brushHist = d3.brushX()
+    .extent([[0, 0], [HIST_WIDTH, HIST_HEIGHT]])
+    .on('end', histBrushEnded);
+
+  svgGroup.append('g')
+    .attr('class', 'brush hist-brush')
+    .call(brushHist);
+
+  // Add tooltip delegation through brush overlay to bars
+  svgGroup.select('.brush .overlay')
+    .on('mousemove', function(event) {
+      const [mx, my] = d3.pointer(event);
+      const hitBar = svgGroup.selectAll('rect.life-bar').filter(function() {
+        const x = +d3.select(this).attr('x');
+        const y = +d3.select(this).attr('y');
+        const w = +d3.select(this).attr('width');
+        const h = +d3.select(this).attr('height');
+        return mx >= x && mx <= x + w && my >= y && my <= y + h;
+      }).node();
+      if (hitBar) {
+        const d = d3.select(hitBar).datum();
+        tooltip.style('display', 'block')
+          .html(`<div class="tooltip-title">${d.country}</div><div>Life expectancy: ${d.life_expectancy}</div>`)
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY + 10) + 'px');
+      } else {
+        tooltip.style('display', 'none');
+      }
+    })
+    .on('mouseout', () => tooltip.style('display', 'none'));
 }
 
 function initEnergyHistogram() {
@@ -100,6 +133,38 @@ function initEnergyHistogram() {
   // group for bars (positioned after svg width is set in update)
   svgGroupE = svg.append('g')
     .attr('transform', `translate(${HIST_MARGIN.left},${HIST_MARGIN.top})`);
+
+  // Brush for energy histogram
+  brushHistE = d3.brushX()
+    .extent([[0, 0], [HIST_WIDTH, HIST_HEIGHT]])
+    .on('end', histEBrushEnded);
+
+  svgGroupE.append('g')
+    .attr('class', 'brush hist-brush-energy')
+    .call(brushHistE);
+
+  // Add tooltip delegation through brush overlay to bars
+  svgGroupE.select('.brush .overlay')
+    .on('mousemove', function(event) {
+      const [mx, my] = d3.pointer(event);
+      const hitBar = svgGroupE.selectAll('rect.country-bar').filter(function() {
+        const x = +d3.select(this).attr('x');
+        const y = +d3.select(this).attr('y');
+        const w = +d3.select(this).attr('width');
+        const h = +d3.select(this).attr('height');
+        return mx >= x && mx <= x + w && my >= y && my <= y + h;
+      }).node();
+      if (hitBar) {
+        const d = d3.select(hitBar).datum();
+        tooltip.style('display', 'block')
+          .html(`<div class="tooltip-title">${d.country}</div><div>Energy: ${d.energy}</div>`)
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY + 10) + 'px');
+      } else {
+        tooltip.style('display', 'none');
+      }
+    })
+    .on('mouseout', () => tooltip.style('display', 'none'));
 
   // band scale for countries; range will be set per-update to allow horizontal scrolling
   xScaleE = d3.scaleBand().padding(0.05).range([0, HIST_WIDTH]);
@@ -115,7 +180,7 @@ function initEnergyHistogram() {
   svgGroupE.append('text')
     .attr('class', 'axis-label')
     .attr('x', HIST_WIDTH / 2)
-    .attr('y', HIST_HEIGHT + 45)
+    .attr('y', HIST_HEIGHT + 105)
     .attr('text-anchor', 'middle')
     .text('Country');
 
@@ -147,6 +212,8 @@ function updateHistogram(year) {
   // Sort by life expectancy descending for nicer ordering
   countryData.sort((a, b) => b.life_expectancy - a.life_expectancy);
 
+  // Keep all countries visible; highlighting will be applied after rendering
+
   // Use the same per-country pixel width as the energy chart
   const n = countryData.length;
   const barStep = BAR_STEP;
@@ -163,6 +230,13 @@ function updateHistogram(year) {
 
   xScale.range([0, innerWidth]).domain(countryData.map(d => d.country));
   yScale.domain([0, d3.max(countryData, d => d.life_expectancy) || 1]);
+
+  // Update brush extent to match the actual chart width
+  brushHist.extent([[0, 0], [innerWidth, HIST_HEIGHT]]);
+  svgGroup.select('.hist-brush').call(brushHist);
+
+  // Apply selection styling (selected/dimmed) after drawing
+  if (typeof updateSelectionStyles === 'function') updateSelectionStyles();
 
   const bars = svgGroup.selectAll('rect.life-bar')
     .data(countryData, d => d.country);
@@ -197,6 +271,9 @@ function updateHistogram(year) {
   barsEnter.transition().duration(300)
     .attr('y', d => yScale(d.life_expectancy))
     .attr('height', d => HIST_HEIGHT - yScale(d.life_expectancy));
+
+  // Bring brush to front so it's interactive
+  svgGroup.select('.hist-brush').raise();
 
   xAxis = d3.axisBottom(xScale);
   yAxis = d3.axisLeft(yScale).ticks(6);
@@ -234,6 +311,7 @@ function updateEnergyHistogram(year) {
 
   // Sort by energy descending for better visual ordering
   countryData.sort((a, b) => b.energy - a.energy);
+  // Keep all countries visible; selection styling will be applied after rendering
 
   const n = countryData.length;
   const barStep = BAR_STEP; // use shared BAR_STEP
@@ -260,6 +338,12 @@ function updateEnergyHistogram(year) {
   // Update scales
   xScaleE.range([0, innerWidth]).domain(countryData.map(d => d.country));
   yScaleE.domain([0, d3.max(countryData, d => d.energy) || 1]);
+
+  // Update brush extent to match the actual chart width
+  brushHistE.extent([[0, 0], [innerWidth, HIST_HEIGHT]]);
+  svgGroupE.select('.hist-brush-energy').call(brushHistE);
+
+  // If a country selection exists, restriction is already applied above
 
   // DATA JOIN for bars
   const bars = svgGroupE.selectAll('rect.country-bar')
@@ -299,6 +383,9 @@ function updateEnergyHistogram(year) {
     .attr('y', d => yScaleE(d.energy))
     .attr('height', d => HIST_HEIGHT - yScaleE(d.energy));
 
+  // Bring brush to front so it's interactive
+  svgGroupE.select('.hist-brush-energy').raise();
+
   // Axes
   xAxisE = d3.axisBottom(xScaleE);
   yAxisE = d3.axisLeft(yScaleE).ticks(6);
@@ -322,7 +409,105 @@ function updateEnergyHistogram(year) {
       .attr('fill', '#666')
       .text('No data for selected year');
   }
+  // Apply selection highlighting (if any)
+  if (typeof updateSelectionStyles === 'function') updateSelectionStyles();
 }
+
+// Apply a selection set (Set of country names) across charts
+function applyCountrySelection(countrySet) {
+  if (!countrySet || countrySet.size === 0) {
+    window.selectedCountries = null;
+  } else {
+    window.selectedCountries = countrySet;
+  }
+  // Update visual highlighting across charts
+  if (typeof updateSelectionStyles === 'function') updateSelectionStyles();
+}
+
+function clearCountrySelection() {
+  window.selectedCountries = null;
+  if (typeof updateSelectionStyles === 'function') updateSelectionStyles();
+}
+
+// Histogram brush end handlers
+function histBrushEnded({selection}) {
+  if (!selection) {
+    // cleared
+    clearCountrySelection();
+    return;
+  }
+  const [x0, x1] = selection;
+  const domains = xScale.domain();
+  const selected = new Set();
+  domains.forEach(country => {
+    const cx = xScale(country) + xScale.bandwidth() / 2;
+    if (cx >= x0 && cx <= x1) selected.add(country);
+  });
+  applyCountrySelection(selected);
+}
+
+function histEBrushEnded({selection}) {
+  if (!selection) {
+    clearCountrySelection();
+    return;
+  }
+  const [x0, x1] = selection;
+  const domains = xScaleE.domain();
+  const selected = new Set();
+  domains.forEach(country => {
+    const cx = xScaleE(country) + xScaleE.bandwidth() / 2;
+    if (cx >= x0 && cx <= x1) selected.add(country);
+  });
+  applyCountrySelection(selected);
+}
+
+// Update classes on elements to reflect current selection
+function updateSelectionStyles() {
+  const sel = window.selectedCountries;
+  // Life bars
+  d3.selectAll('#histogram .life-bar').each(function(d) {
+    const node = d3.select(this);
+    const country = d ? d.country : null;
+    if (!sel || sel.size === 0) {
+      node.classed('selected', false).classed('dimmed', false);
+    } else if (country && sel.has(country)) {
+      node.classed('selected', true).classed('dimmed', false);
+    } else {
+      node.classed('selected', false).classed('dimmed', true);
+    }
+  });
+
+  // Energy bars
+  d3.selectAll('#histogram-energy .country-bar').each(function(d) {
+    const node = d3.select(this);
+    const country = d ? d.country : null;
+    if (!sel || sel.size === 0) {
+      node.classed('selected', false).classed('dimmed', false);
+    } else if (country && sel.has(country)) {
+      node.classed('selected', true).classed('dimmed', false);
+    } else {
+      node.classed('selected', false).classed('dimmed', true);
+    }
+  });
+
+  // Scatter points
+  d3.selectAll('#scatter .point').each(function(d) {
+    const node = d3.select(this);
+    const country = d ? d.country : null;
+    if (!sel || sel.size === 0) {
+      node.classed('selected', false).classed('dimmed', false);
+    } else if (country && sel.has(country)) {
+      node.classed('selected', true).classed('dimmed', false);
+    } else {
+      node.classed('selected', false).classed('dimmed', true);
+    }
+  });
+}
+
+// Expose selection helper globally for other modules
+window.applyCountrySelection = applyCountrySelection;
+window.clearCountrySelection = clearCountrySelection;
+window.updateSelectionStyles = updateSelectionStyles;
 
 // Load data and initialize everything
 initHistogram();

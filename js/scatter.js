@@ -8,6 +8,7 @@ const S_HEIGHT = 500 - S_MARGIN.top - S_MARGIN.bottom;
 let svgScatter, svgGroupScatter, xScaleScatter, yScaleScatter;
 let xAxisSG, yAxisSG, xAxisScatter, yAxisScatter, tooltipScatter;
 let globalEnergyDomain, globalLifeDomain;
+let brushScatter;
 
 function initScatter() {
   svgScatter = d3.select('#scatter')
@@ -52,6 +53,15 @@ function initScatter() {
     .text('Life Expectancy vs Energy Consumption by Country');
 
   tooltipScatter = d3.select('#tooltip');
+
+  // Add brushing for scatter selection
+  brushScatter = d3.brush()
+    .extent([[0, 0], [S_WIDTH, S_HEIGHT]])
+    .on('end', scatterBrushEnded);
+
+  svgGroupScatter.append('g')
+    .attr('class', 'brush scatter-brush')
+    .call(brushScatter);
 }
 
 function updateScatter(year) {
@@ -64,6 +74,9 @@ function updateScatter(year) {
     !isNaN(d.energy_consumption) &&
     (typeof window.selectedContinents === 'undefined' || window.selectedContinents.has(d.continent))
   );
+
+  // Keep all points visible; selection highlighting is applied after drawing
+  const filteredPoints = points;
 
   svgGroupScatter.selectAll('text.no-data').remove();
   if (points.length === 0) {
@@ -78,9 +91,9 @@ function updateScatter(year) {
     return;
   }
 
-  // Set domains (global for comparability across years)
-  xScaleScatter.domain([0, d3.max(points, d => d.energy_consumption) || 100]);
-  yScaleScatter.domain([0, d3.max(points, d => d.life_expectancy) || 100]);
+  // Set domains (based on visible points)
+  xScaleScatter.domain([0, d3.max(filteredPoints, d => d.energy_consumption) || 100]);
+  yScaleScatter.domain([0, d3.max(filteredPoints, d => d.life_expectancy) || 100]);
 
   xAxisScatter = d3.axisBottom(xScaleScatter).ticks(8);
   yAxisScatter = d3.axisLeft(yScaleScatter).ticks(6);
@@ -89,7 +102,7 @@ function updateScatter(year) {
   yAxisSG.transition().duration(250).call(yAxisScatter);
 
   const circles = svgGroupScatter.selectAll('circle.point')
-    .data(points, d => d.country);
+    .data(filteredPoints, d => d.country);
 
   // Exit
   circles.exit().transition().duration(200).attr('r', 0).remove();
@@ -120,6 +133,25 @@ function updateScatter(year) {
     .on('mouseout', () => tooltipScatter.style('display', 'none'));
 
   enter.transition().duration(300).attr('r', 5);
+  // Apply selection highlighting (if any)
+  if (typeof updateSelectionStyles === 'function') updateSelectionStyles();
+}
+
+function scatterBrushEnded({selection}) {
+  if (!selection) {
+    // cleared
+    if (typeof clearCountrySelection === 'function') clearCountrySelection();
+    return;
+  }
+  const [[x0, y0], [x1, y1]] = selection;
+  const selected = new Set();
+  svgGroupScatter.selectAll('circle.point').each(function(d) {
+    const node = d3.select(this);
+    const cx = +node.attr('cx');
+    const cy = +node.attr('cy');
+    if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) selected.add(d.country);
+  });
+  if (typeof applyCountrySelection === 'function') applyCountrySelection(selected);
 }
 
 // Initialize when histogram data is ready
