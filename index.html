@@ -18,46 +18,47 @@
 
     <!-- Add HTML content, SVG drawing area, ... -->
 
-        <div id="legend" style="margin: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px; width: fit-content;">
-            <h3 style="margin-top: 0;">Continents</h3>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 16px; height: 16px; background: #E74C3C; border-radius: 2px;"></div>
-                    <span>Asia</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 16px; height: 16px; background: #F39C12; border-radius: 2px;"></div>
-                    <span>Africa</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 16px; height: 16px; background: #3498DB; border-radius: 2px;"></div>
-                    <span>Europe</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 16px; height: 16px; background: #f6ff00; border-radius: 2px;"></div>
-                    <span>North America</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 16px; height: 16px; background: #9B59B6; border-radius: 2px;"></div>
-                    <span>South America</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 16px; height: 16px; background: #02c21f; border-radius: 2px;"></div>
-                    <span>Oceania</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;" data-continent="Unknown">
-                    <div style="width: 16px; height: 16px; background: #95A5A6; border-radius: 2px;"></div>
-                    <span>Other</span>
+        <div id="topbar" style="display:flex; gap:20px; align-items:center; padding:12px 20px; width:100%; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+           
+            <div id="legend" style="margin: 0; padding: 12px; background: #f5f5f5; border-radius: 5px;">
+                <h3 style="margin: 0 8px 8px 0;">Continents</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 16px; height: 16px; background: #E74C3C; border-radius: 2px;"></div>
+                        <span>Asia</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 16px; height: 16px; background: #F39C12; border-radius: 2px;"></div>
+                        <span>Africa</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 16px; height: 16px; background: #3498DB; border-radius: 2px;"></div>
+                        <span>Europe</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 16px; height: 16px; background: #f6ff00; border-radius: 2px;"></div>
+                        <span>North America</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 16px; height: 16px; background: #9B59B6; border-radius: 2px;"></div>
+                        <span>South America</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 16px; height: 16px; background: #02c21f; border-radius: 2px;"></div>
+                        <span>Oceania</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;" data-continent="Unknown">
+                        <div style="width: 16px; height: 16px; background: #95A5A6; border-radius: 2px;"></div>
+                        <span>Other</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="year-control" style="margin: 10px 20px;">
-            <label for="yearSlider">Year: <span id="yearLabel">2023</span></label>
-            <input id="yearSlider" type="range" min="1950" max="2023" value="2023" step="1" />
+            <div id="year-control" style="margin: 0; display:flex; gap:8px; align-items:center;">
+                <label for="yearSlider" style="margin:0;">Year: <span id="yearLabel">2023</span></label>
+                <input id="yearSlider" type="range" min="1950" max="2023" value="2023" step="1" />
+            </div>
         </div>
-
-        <svg id="timeline"></svg>
 
         <div id="histograms-row">
             <div id="histogram-container">

@@ -202,3 +202,19 @@ html, body {
   font-weight: 600;
   margin-right: 6px;
 }
+
+/* Sticky topbar to keep selector, legend, and year slider visible */
+#topbar {
+  position: relative; /* JS will set fixed positioning at bottom */
+  z-index: 1000;
+  background: #ffffff;
+  border-top: 1px solid #e6e6e6;
+}
+
+/* Compact legend items when in the topbar */
+#topbar #legend {
+  display: flex;
+  align-items: center;
+}
+
+#topbar #legend h3 { margin-right: 12px; }

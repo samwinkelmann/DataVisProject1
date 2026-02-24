@@ -8,8 +8,8 @@ class ChoroplethMap {
   constructor(_config, _data) {
     this.config = {
       parentElement: _config.parentElement,
-      containerWidth: _config.containerWidth || 500,
-      containerHeight: _config.containerHeight || 400,
+      containerWidth: _config.containerWidth || 800,
+      containerHeight: _config.containerHeight || 500,
       margin: _config.margin || {top: 10, right: 10, bottom: 10, left: 10},
       tooltipPadding: 10,
       legendElementId: _config.legendElementId || 'legend-container',
@@ -207,16 +207,16 @@ class ChoroplethMap {
         .attr('height', vis.config.legendRectHeight)
         .attr('fill', `url(#legend-gradient-${vis.config.legendElementId})`);
     
-    // Add min and max labels
+    // Add min and max labels (moved down to avoid overlap)
     legendSvg.append('text')
         .attr('x', 10)
-        .attr('y', 25)
+        .attr('y', 29)
         .attr('font-size', '11px')
         .text(Math.round(vis.legendStops[0].value * 10) / 10);
     
     legendSvg.append('text')
-        .attr('x', vis.config.legendRectWidth)
-        .attr('y', 25)
+        .attr('x', 160)
+        .attr('y', 29)
         .attr('text-anchor', 'end')
         .attr('font-size', '11px')
         .text(Math.round(vis.legendStops[1].value * 10) / 10);

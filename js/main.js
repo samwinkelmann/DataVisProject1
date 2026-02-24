@@ -136,8 +136,8 @@ function initializeChoropleth(year) {
   if (!choroplethMap) {
     choroplethMap = new ChoroplethMap({
       parentElement: '#choropleth',
-      containerWidth: 600,
-      containerHeight: 450,
+      containerWidth: 800,
+      containerHeight: 500,
       colorRange: ['#cfe2f2', '#0d306b'],
       legendTitle: 'Life Expectancy (years)',
       dataProperty: 'life_expectancy',
@@ -248,8 +248,8 @@ function initializeEnergyChoropleth(year) {
   if (!energyChoroplethMap) {
     energyChoroplethMap = new ChoroplethMap({
       parentElement: '#choropleth-energy',
-      containerWidth: 600,
-      containerHeight: 450,
+      containerWidth: 800,
+      containerHeight: 500,
       colorRange: ['#fff5e6', '#cc8800'],
       legendTitle: 'Energy Consumption (TWh)',
       dataProperty: 'energy_consumption',
@@ -322,3 +322,56 @@ function computeDays(disasterDate){
     return (Date.UTC(year, month-1, day) - Date.UTC(year, 0, 0)) / 24 / 60 / 60 / 1000 ;
 
   }
+
+// Chart reorder control: move selected chart container to top of the page
+function reorderCharts(kind) {
+  const header = document.getElementById('project-header');
+  if (!header) return;
+
+  let el = null;
+  if (kind === 'histograms') el = document.getElementById('histograms-row');
+  else if (kind === 'scatter') el = document.getElementById('scatter-container');
+  else if (kind === 'choropleth') el = document.getElementById('choropleth-container');
+  if (!el) return;
+
+  const parent = header.parentNode;
+  const ref = header.nextElementSibling;
+  // Insert the chosen element immediately after the header
+  parent.insertBefore(el, ref);
+}
+
+function initChartOrderControl() {
+  const select = document.getElementById('chartOrderSelect');
+  if (!select) return;
+
+  // apply when selection changes
+  select.addEventListener('change', () => reorderCharts(select.value));
+
+  // apply current selection immediately so the UI is consistent on load
+  reorderCharts(select.value);
+}
+
+// Initialize control when DOM finishes loading
+window.addEventListener('load', initChartOrderControl);
+
+// Ensure the topbar stays visible by fixing it below the header (robust fallback)
+function fixTopbarPosition() {
+  const topbar = document.getElementById('topbar');
+  const header = document.getElementById('project-header');
+  if (!topbar || !header) return;
+
+  // Apply fixed positioning at the bottom of the viewport
+  topbar.style.position = 'fixed';
+  topbar.style.bottom = '0';
+  topbar.style.left = '0';
+  topbar.style.right = '0';
+  topbar.style.zIndex = 1000;
+
+  // Add padding to the body so the fixed topbar doesn't cover content at the bottom
+  // Use padding rather than a spacer to ensure it works even if content changes height
+  const height = topbar.offsetHeight || 0;
+  document.body.style.paddingBottom = height + 'px';
+}
+
+window.addEventListener('load', fixTopbarPosition);
+window.addEventListener('resize', fixTopbarPosition);
