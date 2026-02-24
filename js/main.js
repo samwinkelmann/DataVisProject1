@@ -92,16 +92,27 @@ function initializeChoropleth(year) {
   const filteredData = csvData.filter(d => d.year === year);
   
   // Create a map of country data by country code for this year
+  // Only include rows that have a valid ISO code to avoid matching aggregated rows with empty codes
   const countryDataMap = {};
   filteredData.forEach(d => {
-    countryDataMap[d.code] = d;
+    if (d.code) countryDataMap[d.code] = d;
   });
   
   // Process world features with life expectancy data
   const countriesWithData = baseCountriesGeometry.map(feature => {
-    const isoCode = countryIdToCode[feature.id] || '';
-    const countryData = countryDataMap[isoCode];
-    
+    let isoCode = countryIdToCode[feature.id] || '';
+    let countryData = countryDataMap[isoCode];
+
+    // If no direct ISO match, attempt a name-based fallback but only match CSV rows that have codes
+    if (!countryData) {
+      const featName = (feature.properties && feature.properties.name || '').toLowerCase().replace(/[^\w\s]/g, '').trim();
+      const matched = filteredData.find(d => d.code && (d.country || '').toLowerCase().replace(/[^\w\s]/g, '').trim() === featName);
+      if (matched) {
+        isoCode = matched.code;
+        countryData = countryDataMap[isoCode];
+      }
+    }
+
     return {
       type: 'Feature',
       geometry: feature.geometry,
@@ -143,16 +154,27 @@ function updateChoroplethForYear(year) {
   const filteredData = csvData.filter(d => d.year === year);
   
   // Create a map of country data by country code for this year
+  // Only include rows that have a valid ISO code to avoid matching aggregated rows with empty codes
   const countryDataMap = {};
   filteredData.forEach(d => {
-    countryDataMap[d.code] = d;
+    if (d.code) countryDataMap[d.code] = d;
   });
   
   // Process world features with life expectancy data
   const countriesWithData = baseCountriesGeometry.map(feature => {
-    const isoCode = countryIdToCode[feature.id] || '';
-    const countryData = countryDataMap[isoCode];
-    
+    let isoCode = countryIdToCode[feature.id] || '';
+    let countryData = countryDataMap[isoCode];
+
+    // If no direct ISO match, attempt a name-based fallback but only match CSV rows that have codes
+    if (!countryData) {
+      const featName = (feature.properties && feature.properties.name || '').toLowerCase().replace(/[^\w\s]/g, '').trim();
+      const matched = filteredData.find(d => d.code && (d.country || '').toLowerCase().replace(/[^\w\s]/g, '').trim() === featName);
+      if (matched) {
+        isoCode = matched.code;
+        countryData = countryDataMap[isoCode];
+      }
+    }
+
     return {
       type: 'Feature',
       geometry: feature.geometry,
@@ -182,16 +204,27 @@ function initializeEnergyChoropleth(year) {
   const filteredData = csvData.filter(d => d.year === year);
   
   // Create a map of country data by country code for this year
+  // Only include rows that have a valid ISO code to avoid matching aggregated rows with empty codes
   const countryDataMap = {};
   filteredData.forEach(d => {
-    countryDataMap[d.code] = d;
+    if (d.code) countryDataMap[d.code] = d;
   });
-  
+
   // Process world features with energy consumption data
   const countriesWithData = baseCountriesGeometry.map(feature => {
-    const isoCode = countryIdToCode[feature.id] || '';
-    const countryData = countryDataMap[isoCode];
-    
+    let isoCode = countryIdToCode[feature.id] || '';
+    let countryData = countryDataMap[isoCode];
+
+    // If no direct ISO match, attempt a name-based fallback but only match CSV rows that have codes
+    if (!countryData) {
+      const featName = (feature.properties && feature.properties.name || '').toLowerCase().replace(/[^\w\s]/g, '').trim();
+      const matched = filteredData.find(d => d.code && (d.country || '').toLowerCase().replace(/[^\w\s]/g, '').trim() === featName);
+      if (matched) {
+        isoCode = matched.code;
+        countryData = countryDataMap[isoCode];
+      }
+    }
+
     return {
       type: 'Feature',
       geometry: feature.geometry,
@@ -233,16 +266,27 @@ function updateEnergyChoroplethForYear(year) {
   const filteredData = csvData.filter(d => d.year === year);
   
   // Create a map of country data by country code for this year
+  // Only include rows that have a valid ISO code to avoid matching aggregated rows with empty codes
   const countryDataMap = {};
   filteredData.forEach(d => {
-    countryDataMap[d.code] = d;
+    if (d.code) countryDataMap[d.code] = d;
   });
-  
+
   // Process world features with energy consumption data
   const countriesWithData = baseCountriesGeometry.map(feature => {
-    const isoCode = countryIdToCode[feature.id] || '';
-    const countryData = countryDataMap[isoCode];
-    
+    let isoCode = countryIdToCode[feature.id] || '';
+    let countryData = countryDataMap[isoCode];
+
+    // If no direct ISO match, attempt a name-based fallback but only match CSV rows that have codes
+    if (!countryData) {
+      const featName = (feature.properties && feature.properties.name || '').toLowerCase().replace(/[^\w\s]/g, '').trim();
+      const matched = filteredData.find(d => d.code && (d.country || '').toLowerCase().replace(/[^\w\s]/g, '').trim() === featName);
+      if (matched) {
+        isoCode = matched.code;
+        countryData = countryDataMap[isoCode];
+      }
+    }
+
     return {
       type: 'Feature',
       geometry: feature.geometry,

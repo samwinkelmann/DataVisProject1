@@ -188,9 +188,9 @@ function initEnergyHistogram() {
     .attr('class', 'axis-label')
     .attr('transform', 'rotate(-90)')
     .attr('x', -(HIST_HEIGHT / 2))
-    .attr('y', -45)
+    .attr('y', -50)
     .attr('text-anchor', 'middle')
-    .text('Energy Consumption (per-capita)');
+    .text('Energy Consumption (TWh per-capita)');
 
   svgGroupE.append('text')
     .attr('class', 'title')

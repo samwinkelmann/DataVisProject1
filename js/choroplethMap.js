@@ -145,7 +145,7 @@ class ChoroplethMap {
         .on('mousemove', (event,d) => {
           const dataValue = d.properties && d.properties[vis.config.dataProperty];
           const dataText = dataValue ? `<strong>${dataValue.toFixed(1)}</strong>` : 'No data available'; 
-          const country = (d.properties && d.properties.country) || (d.properties && d.properties.name) || 'Unknown';
+          const country = (d.properties && d.properties.name) || (d.properties && d.properties.country) || 'Unknown';
           d3.select('#tooltip')
             .style('display', 'block')
             .style('left', (event.pageX + vis.config.tooltipPadding) + 'px')   
